@@ -1,0 +1,383 @@
+
+-- 1) category_카테고리정보
+CREATE TABLE category(
+	cateId VARCHAR(20) NOT NULL,
+	catePrCode VARCHAR(20), 
+	cateName VARCHAR(20) NOT NULL,
+    
+	CONSTRAINT category_pk_cateId PRIMARY KEY (pmId),
+	CONSTRAINT category_fk_catePrCode FOREIGN KEY (catePrCode) REFERENCES category (cateId)
+);
+
+
+-- 2) product_상품정보
+CREATE TABLE product(
+	proId VARCHAR(40) NOT NULL,
+	proCate VARCHAR(20) NOT NULL,
+	proName VARCHAR(50) NOT NULL,
+	proContent VARCHAR(255) NOT NULL, 
+	proMade VARCHAR(20) NOT NULL,
+	proMadeDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	proView INT(4) DEFAULT 0,
+	proLike INT(4) DEFAULT 0,
+	proRegDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	proDisplay VARCHAR(10) NOT NULL CHECK (proDisplay IN('Y','N')),
+	proSell VARCHAR(10)  NOT NULL CHECK (proSell IN('Y','N')),
+	proCnt INT(4) DEFAULT 0,
+
+	CONSTRAINT product_pk_proId PRIMARY KEY (proId),
+	CONSTRAINT product_fk_proCate FOREIGN KEY (proCate) REFERENCES category (cateId)
+);
+
+
+-- 3) product_info_상품정보 >>> 함치기로 함
+
+
+-- 4) product_price_상품가격정보
+CREATE TABLE product_price(
+	proId VARCHAR(40) NOT NULL,
+	proPrimeCost INT NOT NULL,
+	proCost INT NOT NULL,
+	proPrice INT NOT NULL,
+	proTax DOUBLE NOT NULL,
+	proMargin DOUBLE NOT NULL,
+	proAddCost INT DEFAULT 0,
+
+	CONSTRAINT product_price_fk_proId FOREIGN KEY (proId) REFERENCES product(proId)
+);
+
+
+-- 5) client_회원정보
+CREATE TABLE client (
+	cId VARCHAR(30) NOT NULL,
+	cPwd VARCHAR(30) NOT NULL,
+	chPwdDate TIMESTAMP default CURRENT_TIMESTAMP,	
+	cName VARCHAR(10) NOT NULL,
+	cNum VARCHAR(13) NOT NULL,
+	cEmail VARCHAR(100) NOT NULL,
+	cEmailCheck CHAR(1) NOT NULL default 'Y' CHECK(cEmailCheck IN('Y', 'N')),
+	cRegDate TIMESTAMP default CURRENT_TIMESTAMP,
+	cRecId VARCHAR(30),					
+	cBirth TIMESTAMP NOT NULL,
+	cNickName VARCHAR(30) NOT NULL,
+	grId CHAR(1) NOT NULL default 'S',		
+	cPoint INT(6) NOT NULL default 0,
+	cpList VARCHAR(255),
+	crList VARCHAR(255),						
+	cmarkList VARCHAR(255),
+	cLogDate TIMESTAMP default CURRENT_TIMESTAMP,
+	cBuyCnt INT(4) default 0,
+	
+	CONSTRAINT client_pk_cId PRIMARY KEY(cId),
+	CONSTRAINT client_fk_cRecId FOREIGN KEY(cRecId) REFERENCES client(cId),
+	CONSTRAINT client_fk_grId FOREIGN KEY(grId) REFERENCES Grade(grId)
+);
+
+-- 6) client_address_배송지정보
+CREATE TABLE client_address (
+	addId VARCHAR(40) NOT NULL,
+	cId VARCHAR(30) NOT NULL,
+	addName VARCHAR(10) NOT NULL,
+	addNum VARCHAR(13) NOT NULL,
+	addPostNum VARCHAR(6) NOT NULL,
+	address1 VARCHAR(50) NOT NULL,
+	address2 VARCHAR(50) NOT NULL,
+	addMemo VARCHAR(50),
+	addBase CHAR(1) NOT NULL default 'N' CHECK(addBase IN('Y', 'N')),
+	
+	CONSTRAINT client_address_pk_addId PRIMARY KEY(addId),
+	CONSTRAINT client_address_fk_cId FOREIGN KEY(cId) REFERENCES client(cId)
+);
+
+-- 7) coupon_쿠폰정보
+CREATE TABLE coupon (
+	cpId VARCHAR(40) NOT NULL,
+	cId VARCHAR(30) NOT NULL,
+	cpCate VARCHAR(20) NOT NULL,
+	cpName VARCHAR(50) NOT NULL,
+	cpPrice INT(8) NOT NULL default 0,
+	cpStDate TIMESTAMP NULL,			
+	cpEndDate TIMESTAMP NULL,			
+	cpProList VARCHAR(20) NOT NULL CHECK(cpProList IN('전체', '상품', '카테고리')),
+	cpStatus VARCHAR(10) NOT NULL CHECK(cpStatus IN('사용가능', '사용완료', '기간만료')),
+
+	CONSTRAINT coupon_pk_cpId PRIMARY KEY(cpId),
+	CONSTRAINT coupon_fk_cId FOREIGN KEY(cId) REFERENCES client(cId),
+	CONSTRAINT coupon_fk_cpCate FOREIGN KEY(cpCate) REFERENCES category(cateId)
+);
+
+-- 8) cart_장바구니
+CREATE TABLE cart ( 
+	proId VARCHAR(40) NOT NULL,
+	cId VARCHAR(30) NOT NULL,
+	caDate TIMESTAMP NULL default CURRENT_TIMESTAMP,
+	caCnt INT(4) default 0,
+
+	CONSTRAINT cart_fk_proId FOREIGN KEY(proId) REFERENCES product(proId),
+	CONSTRAINT cart_fk_cId FOREIGN KEY(cId) REFERENCES client(cId)
+);
+
+-- 9) option_info_옵션정보
+CREATE TABLE option_info(
+	opId VARCHAR(40) NOT NULL,
+	proId VARCHAR(40) NOT NULL, 
+	opName VARCHAR(8) NOT NULL,
+	opVal VARCHAR(10) NOT NULL,
+
+	CONSTRAINT option_pk_opId PRIMARY KEY (opId),
+	CONSTRAINT option_fk_proId FOREIGN KEY (proId) REFERENCES product (proId)
+);
+
+
+-- 10) stock_재고관리
+CREATE TABLE stock(
+	proId VARCHAR(40) NOT NULL,
+	stOpId VARCHAR(40) NOT NULL, 
+	stId CHAR(3),
+	stLoc VARCHAR(3),
+	stPlanDate TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+	stInDate TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+	stOutDate TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+	stCnt INT(4),
+
+	CONSTRAINT stock_fk_proId FOREIGN KEY (proId) REFERENCES product(proId),
+	CONSTRAINT stock_fk_stOpId FOREIGN KEY (stOpId) REFERENCES option_info(opId)
+);
+
+-- 11) client_image_고객 이미지
+CREATE TABLE client_image(
+	cmId VARCHAR(40) NOT NULL,
+	cmName VARCHAR(50) NOT NULL, 
+	cmDir VARCHAR(255) NOT NULL,
+	cmStatus VARCHAR(10) NOT NULL CHECK (cmStatus IN('환불','문의','리뷰')),
+
+	CONSTRAINT client_Image_pk_cmId PRIMARY KEY (cmId)
+);
+
+-- 12) product_image_상품 이미지
+CREATE TABLE product_image(
+	pmIm VARCHAR(40) NOT NULL,
+	proId VARCHAR(40) NOT NULL, 
+	pmName VARCHAR(50) NOT NULL,
+	pmDir VARCHAR(255) NOT NULL,
+	pmStatus VARCHAR(10) CHECK (pmStatus IN('대표','추가','상세')),
+
+	CONSTRAINT product_image_pk_pmId PRIMARY KEY (pmId),
+	CONSTRAINT product_image_fk_proId FOREIGN KEY (proId) REFERENCES product (proId)
+);
+
+-- 13) ordera_주문정보
+CREATE TABLE orders (					
+	odid VARCHAR(30) NOT NULL,
+    cid VARCHAR(30) NOT NULL,
+    addid VARCHAR(40) NOT NULL,
+    odProList VARCHAR(255) NOT NULL,
+	deliId VARCHAR(30) NOT NULL,
+	odDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+	odPrice INT(8) NOT NULL,
+	odStatus VARCHAR(10) NOT NULL CHECK( odStatus IN('상품준비중', '배송준비중', '배송보류', '배송대기', '배송중', '배송완료', '교환중', '환불중', '교환완료', '환불완료')),
+
+	CONSTRAINT orders_pk_odid PRIMARY KEY (odid),
+	CONSTRAINT orders_fk_cid FOREIGN KEY (cid) REFERENCES client(cId),
+	CONSTRAINT orders_fk_addId FOREIGN KEY (addId) REFERENCES client_address(addId)
+);
+
+-- 14) order_info_주문상세정보
+CREATE TABLE orders_info(
+	odId VARCHAR(30) NOT NULL,
+	proId VARCHAR(40) NOT NULL,	
+	opId VARCHAR(40) NOT NULL,
+	odProCnt INT(4) NOT NULL,
+	odTotal INT(8) NOT NULL,	
+	refCheck CHAR(1) NOT NULL DEFAULT 'Y' CHECK(refcheck IN('Y', 'N')),		
+	cpId VARCHAR(40),	
+		
+	CONSTRAINT orders_info_fk_odId FOREIGN KEY (odId) REFERENCES orders(odId),
+	CONSTRAINT orders_info_fk_proId FOREIGN KEY (proId) REFERENCES product(proId),
+	CONSTRAINT orders_info_fk_opId FOREIGN KEY (opId) REFERENCES option_info(opId)
+);
+
+
+-- 15) payment_info_결제정보
+CREATE TABLE payment_info(
+	payId VARCHAR(30),		
+	odId VARCHAR(30),		
+	payMtd VARCHAR(10) CHECK (payMtd IN ('카드', '무통장', '간편결제')),		
+	payDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+	payBillCheck CHAR(1) DEFAULT 'N' CHECK (payBillCheck IN ('Y', 'N')),
+	payBilMtd VARCHAR(10) CHECK (payBilMtd IN ('법인', '개인')),
+	payBilNum VARCHAR(20),
+
+	CONSTRAINT payment_info_pk_payId PRIMARY KEY (payId),
+	CONSTRAINT payment_info_fk_odId FOREIGN KEY (odId) REFERENCES orders(odId)	
+);					
+
+-- delivery_배송정보				-
+CREATE TABLE delivery (
+	dId CHAR(6) NOT NULL,
+	dComeName VARCHAR(20) NOT NULL,
+	dComNum VARCHAR(13) NOT NULL,
+	dPrice INT(5) NOT NULL default 2000,
+	dName VARCHAR(10) NOT NULL,
+	dNum VARCHAR(13) NOT NULL
+	
+	CONSTRAINT delivery_pk_dId PRIMARY KEY(dId)
+);
+
+-- 16) deliver_info_배송정보
+CREATE TABLE deliver_Info (
+	deliId VARCHAR(30) NOT NULL,
+	odId VARCHAR(30) NOT NULL,
+	dId CHAR(6) NOT NULL,
+	deliType VARCHAR(20) NOT NULL default '신규' CHECK (deliType IN ('신규', '교환수거', '교환재배송', '환불수거')),
+	deliCheck CHAR(1) NOT NULL default 'Y' CHECK (deliCheck IN ('Y', 'N')),
+	deliPrice INT(8) NOT NULL default 0,
+	deliNum VARCHAR(30),
+	
+	CONSTRAINT deliver_info_pk_deliId PRIMARY KEY(deliId),
+	CONSTRAINT deliver_info_fk_odId FOREIGN KEY(odId) REFERENCES order(odId),
+	CONSTRAINT deliver_info_fk_dId FOREIGN KEY(dId) REFERENCES delivery(dId)
+);
+
+-- 17) qna_문의사항정보
+CREATE TABLE qna (
+	qId VARCHAR(40) NOT NULL,
+	cId VARCHAR(30) NOT NULL,
+	odId VARCHAR(40) NOT NULL,
+	qTitle VARCHAR(50) NOT NULL,
+	qContent VARCHAR(255) NOT NULL,
+	qImage VARCHAR(40),
+	qDate TIMESTAMP default CURRENT_TIMESTAMP,
+	qSecCheck CHAR(1) NOT NULL default 'Y' CHECK (qSecCheck IN ('Y', 'N')),
+	qSecPwd CHAR(4) NOT NULL,
+	qStatus VARCHAR(10) NOT NULL default '답변대기' CHECK (qStatus IN ('답변대기', '답변완료')),
+	qAnswer VARCHAR(255),
+	qaDate TIMESTAMP NULL default CURRENT_TIMESTAMP,
+	
+	CONSTRAINT qna_pk_qId PRIMARY KEY(qId),
+	CONSTRAINT qna_fk_cId FOREIGN KEY(cId) REFERENCES client(cId),
+	CONSTRAINT qna_fk_odId FOREIGN KEY(odId) REFERENCES order(odId),
+	CONSTRAINT qna_fk_qImage FOREIGN KEY(qImage) REFERENCES product_image(pmId)
+);
+
+-- 18) review_리뷰정보
+CREATE TABLE review(
+	reId VARCHAR(40) NOT NULL,
+	cId VARCHAR(30) NOT NULL,
+	odId VARCHAR(30) NOT NULL,
+	proId VARCHAR(40) NOT NULL,
+	reContent VARCHAR(255) NOT NULL,
+	reImage VARCHAR(40),
+	reStar DOUBLE(3,1) NOT NULL,
+	reDate TIMESTAMP default CURRENT_TIMESTAMP,
+	rePlus INT(4) NOT NULL default 0,
+	reMinus INT(4) NOT NULL default 0,
+	reStatus VARCHAR(10) NOT NULL default '일반' CHECK (reStatus IN ('일반', '포토')),
+	CONSTRAINT review_pk_reId PRIMARY KEY(reId),
+	CONSTRAINT review_fk_cId FOREIGN KEY(cId) REFERENCES client(cId),
+	CONSTRAINT review_fk_odId FOREIGN KEY(odId) REFERENCES order(odId),
+	CONSTRAINT review_fk_proId FOREIGN KEY(proId) REFERENCES product(proId),
+	CONSTRAINT review_fk_reImage FOREIGN KEY(reImage) REFERENCES product_image(pmId)
+);
+
+-- 19) swap_교환정보
+CREATE TABLE swap(
+	spId VARCHAR(30),	
+	odId VARCHAR(30) ,
+	spReason VARCHAR(255),	
+	spImage VARCHAR(40),		
+	spCost INT(8) NOT NULL,			
+	spCostMtd VARCHAR(10) NOT NULL CHECK (spCostMtd IN('택배에동봉', '무통장입금')), 
+	spStatus VARCHAR(10) NOT NULL CHECK default '교환요청'(spstatus IN('교환요청', '교환진행', '교환완료')),
+	swEmail VARCHAR(100),
+	swRegDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+	opId VARCHAR(40) ,	
+    
+	CONSTRAINT swap_pk_spId PRIMARY KEY (spId),
+	CONSTRAINT swap_fk_odId FOREIGN KEY (odId) REFERENCES orders(odId),	 	
+	CONSTRAINT swap_fk_opId FOREIGN KEY (opId) REFERENCES option_info(opId)
+);
+
+-- 20) refund_환불정보
+CREATE TABLE refund (
+	refId VARCHAR(30),	
+	odId VARCHAR(30),		
+	refReason VARCHAR(255),		
+	refImage VARCHAR(40),		
+	refWay VARCHAR(10) NOT NULL CHECK (refway IN ('직접발송', '택배수거')), 			
+	refCost INT(8) NOT NULL,
+	refCostMtd VARCHAR(10) NOT NULL CHECK (refcostmtd IN('택배에동봉', '무통장입금')),
+	bankId CHAR(5),							
+	refBankNum VARCHAR(30),				
+	refStatus VARCHAR(10) NOT NULL default '환불요청'CHECK (spstatus IN('환불요청', '환불진행', '환불완료')),	
+	refRegDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+	refEmail VARCHAR(100),
+
+	CONSTRAINT refund_pk_refId PRIMARY KEY (refId),
+	CONSTRAINT refund_fk_odId FOREIGN KEY (odId) REFERENCES orders(odId),	 
+	CONSTRAINT refund_fk_bankId FOREIGN KEY (bankId) REFERENCES bank(bankId)
+);
+
+-- 21) withdraw_info_탈퇴회원정보
+CREATE TABLE withdraw_info(
+	wcId VARCHAR(30),					
+	wcDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),		
+	wcReason VARCHAR(255) NOT NULL,					
+
+	CONSTRAINT withdraw_info_pk_wcId FOREIGN KEY (cId) REFERENCES client(cId)
+);
+
+-- 22) blacklist_블랙리스트정보
+CREATE TABLE blacklist (
+	blackId VARCHAR(30) NOT NULL,	
+	cId VARCHAR(30),			
+	blackReason VARCHAR(255),		
+
+	CONSTRAINT blacklist_pk_blackId PRIMARY KEY (blackId),
+	CONSTRAINT blacklist_fk_cid FOREIGN KEY (cid) REFERENCES client(cId)
+);
+
+-- 6. 순서 상관 없는 테이블
+-- bank_은행정보
+CREATE TABLE bank(
+	bankId CHAR(5),	
+	bankName VARCHAR(20) NOT NULL,
+	CONSTRAINT bank_pk_bankId PRIMARY KEY (bankId)
+);
+
+-- company_회사정보
+CREATE TABLE company(	
+	comName VARCHAR(10) NOT NULL,
+	comCEOName VARCHAR(10) NOT NULL,
+	comNum VARCHAR(13) NOT NULL,
+	comHelpName VARCHAR(10) NOT NULL,
+	comHelpNum VARCHAR(13) NOT NULL,
+	comAgreement VARCHAR(255) NOT NULL
+);
+
+-- grade_등급정보
+CREATE TABLE grade(
+	grId CHAR(1) CHECK (grId in ('S', 'G', 'B')),
+	grName VARCHAR(8) CHECK (grName IN ('SILVER', 'GOLD', 'BLACK')),	
+	grPoint DOUBLE(4,1) CHECK (grPoint IN (0.5, 1.0, 1.5)),
+    
+	CONSTRAINT grade_pk_grId PRIMARY KEY (grId)
+);
+
+
+-- notice_공지사항정보
+CREATE TABLE notice (
+	noId VARCHAR(30),			
+	noWriter VARCHAR(30),	
+	noDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),	
+	noTitle VARCHAR(50),
+	noContent VARCHAR(255),	
+	noImage VARCHAR(150),	
+	noFile VARCHAR(150),
+
+	CONSTRAINT notice_pk_noId PRIMARY KEY (noId)	
+);
+
+
+
+
